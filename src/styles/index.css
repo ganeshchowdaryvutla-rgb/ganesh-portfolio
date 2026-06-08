@@ -1176,6 +1176,14 @@ section {
   body { cursor: auto; }
   .vision-quote { font-size: var(--text-3xl); }
   .vision-inner { padding: 30px 20px; }
+
+  /* Increase avatar canvas background size on mobile */
+  #avatar-canvas {
+    width: 110vw;
+    height: 110vh;
+    top: -5vh;
+    left: -5vw;
+  }
 }
 
 @media (max-width: 480px) {

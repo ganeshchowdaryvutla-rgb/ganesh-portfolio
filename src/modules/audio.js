@@ -12,11 +12,15 @@ let isSuspendedByScroll = false;
 let speechVoices = [];
 
 // Pre-load speech voices immediately on script load to bypass async fetching delays on page load
-if (typeof window !== 'undefined' && window.speechSynthesis) {
-  speechVoices = window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => {
+function updateVoices() {
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
     speechVoices = window.speechSynthesis.getVoices();
-  };
+  }
+}
+
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  updateVoices();
+  window.speechSynthesis.onvoiceschanged = updateVoices;
 }
 
 window.isAudioPlaying = false;
@@ -133,29 +137,66 @@ export function initAudio() {
     // Use cached speechVoices array if available, otherwise call getVoices()
     const voices = speechVoices.length > 0 ? speechVoices : window.speechSynthesis.getVoices();
     
-    // Look for a high-quality English male voice
-    let voice = voices.find(v => {
+    // Score all available voices to select the best English male voice
+    const maleNames = [
+      'david', 'mark', 'george', 'alex', 'daniel', 'fred', 'oliver', 'aaron', 'arthur', 
+      'gordon', 'rishi', 'ravi', 'james', 'william', 'jack', 'harry', 'charlie', 
+      'thomas', 'matt', 'robert', 'peter', 'guy', 'boy', 'man', 'male', 'voice 1', 
+      'voice 3', 'voice1', 'voice3', 'natural', 'microsoft david', 'google uk english male'
+    ];
+
+    const femaleNames = [
+      'samantha', 'susan', 'zira', 'hazel', 'karen', 'moira', 'tessa', 'veena', 
+      'sangeeta', 'heera', 'victoria', 'stephanie', 'fiona', 'female', 'girl', 
+      'woman', 'lady', 'voice 2', 'voice 4', 'voice2', 'voice4', 'google us english', 
+      'microsoft zira'
+    ];
+
+    const scoredVoices = voices.map(v => {
       const name = v.name.toLowerCase();
-      return (
-        name.includes('male') || 
-        name.includes('david') || 
-        name.includes('mark') || 
-        name.includes('george') || 
-        name.includes('alex') || 
-        name.includes('daniel') || 
-        name.includes('fred') ||
-        name.includes('oliver') ||
-        name.includes('voice 1') || // Siri US/India Male
-        name.includes('voice 3')    // Siri US Male
-      ) && v.lang.startsWith('en');
+      const lang = v.lang.toLowerCase();
+      let score = 0;
+
+      // Primary check: Language must be English for English text
+      if (lang.startsWith('en')) {
+        score += 100;
+      } else {
+        score -= 200; // heavy penalty for non-English languages
+      }
+
+      // Check for male keywords
+      for (const maleName of maleNames) {
+        if (name.includes(maleName)) {
+          score += 150;
+          break;
+        }
+      }
+
+      // Check for female keywords
+      for (const femaleName of femaleNames) {
+        if (name.includes(femaleName)) {
+          score -= 300;
+          break;
+        }
+      }
+
+      // Prefer local/high-quality voices if available
+      if (v.localService) {
+        score += 20;
+      }
+
+      return { voice: v, score };
     });
 
-    // Fallback if no male voice is found
-    if (!voice) {
-      voice = voices.find(v => 
-        (v.name.includes('Google US English') || v.lang.startsWith('en')) &&
-        !v.name.includes('Low')
-      );
+    // Sort descending by score
+    scoredVoices.sort((a, b) => b.score - a.score);
+
+    let voice = null;
+    if (scoredVoices[0] && scoredVoices[0].score > -100) {
+      voice = scoredVoices[0].voice;
+      console.log(`Selected male voice: ${voice.name} (${voice.lang}) with score ${scoredVoices[0].score}`);
+    } else {
+      console.warn('Could not find a high-quality male English voice, using browser default voice.');
     }
 
     if (voice) {
@@ -186,9 +227,4 @@ export function initAudio() {
     });
   }
 
-  if (typeof window !== 'undefined' && window.speechSynthesis) {
-    window.speechSynthesis.onvoiceschanged = () => {
-      window.speechSynthesis.getVoices();
-    };
-  }
 }

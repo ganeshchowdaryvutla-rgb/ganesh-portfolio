@@ -49,8 +49,11 @@ export function initAvatar() {
 function sizeCanvas() {
   // High-DPI Retina scaling for sharp frame display (capped at 2 for performance)
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  canvas.width = window.innerWidth * dpr;
-  canvas.height = window.innerHeight * dpr;
+  const isMobile = window.innerWidth <= 768;
+  // Increase canvas resolution dimensions slightly on mobile to match CSS overflow sizing
+  const overflowScale = isMobile ? 1.1 : 1.0;
+  canvas.width = window.innerWidth * overflowScale * dpr;
+  canvas.height = window.innerHeight * overflowScale * dpr;
 
   // Redraw current frame at new size
   if (currentFrame >= 0) {
@@ -78,8 +81,8 @@ function renderFrame(index) {
 
   if (isMobile) {
     // Mobile: contain-fit inside viewport, centering both horizontally and vertically.
-    // Scale up by 2.3x to increase its screen presence (height and width) on mobile backgrounds.
-    const mobileScale = 2.3;
+    // Scale up by 3.8x to increase its screen presence (height and width) on mobile backgrounds.
+    const mobileScale = 3.8;
     if (canvasRatio > imgRatio) {
       drawH = ch * mobileScale;
       drawW = ch * imgRatio * mobileScale;
