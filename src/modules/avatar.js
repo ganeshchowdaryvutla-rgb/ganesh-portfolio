@@ -78,13 +78,14 @@ function renderFrame(index) {
 
   if (isMobile) {
     // Mobile: contain-fit inside viewport, centering both horizontally and vertically.
-    // This shows the full body, left and right hands, and centers the avatar in the middle of the screen.
+    // Scale up by 1.35x to increase its height and screen presence on mobile viewports.
+    const mobileScale = 1.35;
     if (canvasRatio > imgRatio) {
-      drawH = ch;
-      drawW = ch * imgRatio;
+      drawH = ch * mobileScale;
+      drawW = ch * imgRatio * mobileScale;
     } else {
-      drawW = cw;
-      drawH = cw / imgRatio;
+      drawW = cw * mobileScale;
+      drawH = (cw / imgRatio) * mobileScale;
     }
     drawX = (cw - drawW) / 2;
     drawY = (ch - drawH) / 2;

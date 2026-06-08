@@ -122,10 +122,30 @@ export function initAudio() {
     synthUtterance = new SpeechSynthesisUtterance(text);
     
     const voices = window.speechSynthesis.getVoices();
-    const voice = voices.find(v => 
-      (v.name.includes('Google US English') || v.name.includes('Natural') || v.lang.startsWith('en')) &&
-      !v.name.includes('Low')
-    );
+    
+    // Look for a high-quality English male voice
+    let voice = voices.find(v => {
+      const name = v.name.toLowerCase();
+      return (
+        name.includes('male') || 
+        name.includes('david') || 
+        name.includes('mark') || 
+        name.includes('george') || 
+        name.includes('alex') || 
+        name.includes('daniel') || 
+        name.includes('fred') ||
+        name.includes('oliver')
+      ) && v.lang.startsWith('en');
+    });
+
+    // Fallback if no male voice is found
+    if (!voice) {
+      voice = voices.find(v => 
+        (v.name.includes('Google US English') || v.lang.startsWith('en')) &&
+        !v.name.includes('Low')
+      );
+    }
+
     if (voice) {
       synthUtterance.voice = voice;
     }
