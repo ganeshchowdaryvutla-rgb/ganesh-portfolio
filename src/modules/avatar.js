@@ -78,8 +78,8 @@ function renderFrame(index) {
 
   if (isMobile) {
     // Mobile: contain-fit inside viewport, centering both horizontally and vertically.
-    // Scale up by 1.35x to increase its height and screen presence on mobile viewports.
-    const mobileScale = 1.35;
+    // Scale up by 2.3x to increase its screen presence (height and width) on mobile backgrounds.
+    const mobileScale = 2.3;
     if (canvasRatio > imgRatio) {
       drawH = ch * mobileScale;
       drawW = ch * imgRatio * mobileScale;

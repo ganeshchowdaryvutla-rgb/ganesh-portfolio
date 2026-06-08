@@ -9,6 +9,15 @@ let useSynthFallback = false;
 let synthUtterance = null;
 let isPlaying = false;
 let isSuspendedByScroll = false;
+let speechVoices = [];
+
+// Pre-load speech voices immediately on script load to bypass async fetching delays on page load
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  speechVoices = window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => {
+    speechVoices = window.speechSynthesis.getVoices();
+  };
+}
 
 window.isAudioPlaying = false;
 
@@ -121,7 +130,8 @@ export function initAudio() {
     const text = "Hi, I am Ganesh. A technology enthusiast, entrepreneur, and AI innovator. Welcome to my digital space. Let's build something extraordinary together.";
     synthUtterance = new SpeechSynthesisUtterance(text);
     
-    const voices = window.speechSynthesis.getVoices();
+    // Use cached speechVoices array if available, otherwise call getVoices()
+    const voices = speechVoices.length > 0 ? speechVoices : window.speechSynthesis.getVoices();
     
     // Look for a high-quality English male voice
     let voice = voices.find(v => {
@@ -134,7 +144,9 @@ export function initAudio() {
         name.includes('alex') || 
         name.includes('daniel') || 
         name.includes('fred') ||
-        name.includes('oliver')
+        name.includes('oliver') ||
+        name.includes('voice 1') || // Siri US/India Male
+        name.includes('voice 3')    // Siri US Male
       ) && v.lang.startsWith('en');
     });
 
