@@ -74,19 +74,35 @@ function renderFrame(index) {
 
   let drawW, drawH, drawX, drawY;
 
-  // COVER-FIT: Cover the full screen, align to top to avoid cutting off the head
-  if (canvasRatio > imgRatio) {
-    // Canvas is wider than image (widescreen desktop) -> fit width, crop bottom
-    drawW = cw;
-    drawH = cw / imgRatio;
-    drawX = 0;
-    drawY = 0; // align to top
+  const isMobile = window.innerWidth <= 768;
+
+  if (isMobile) {
+    // Mobile: contain-fit inside viewport, centering both horizontally and vertically.
+    // This shows the full body, left and right hands, and centers the avatar in the middle of the screen.
+    if (canvasRatio > imgRatio) {
+      drawH = ch;
+      drawW = ch * imgRatio;
+    } else {
+      drawW = cw;
+      drawH = cw / imgRatio;
+    }
+    drawX = (cw - drawW) / 2;
+    drawY = (ch - drawH) / 2;
   } else {
-    // Canvas is taller than image (mobile portrait) -> fit height, crop sides
-    drawH = ch;
-    drawW = ch * imgRatio;
-    drawX = (cw - drawW) / 2; // center horizontally
-    drawY = 0;
+    // Desktop/Laptop: cover-fit, aligned to top
+    if (canvasRatio > imgRatio) {
+      // Canvas is wider than image (widescreen desktop) -> fit width, crop bottom
+      drawW = cw;
+      drawH = cw / imgRatio;
+      drawX = 0;
+      drawY = 0; // align to top
+    } else {
+      // Canvas is taller than image (mobile portrait) -> fit height, crop sides
+      drawH = ch;
+      drawW = ch * imgRatio;
+      drawX = (cw - drawW) / 2; // center horizontally
+      drawY = 0;
+    }
   }
 
   // Ensure high quality image scaling

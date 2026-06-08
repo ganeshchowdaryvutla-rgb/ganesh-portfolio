@@ -16,6 +16,11 @@ export function initAudio() {
   const audio = document.getElementById('bg-audio');
   if (!audio) return;
 
+  // Set fallback by default if the source is a placeholder/example URL to prevent async error loading triggers
+  if (audio.src && (audio.src.includes('example.com') || audio.src.includes('invalid') || !audio.src)) {
+    useSynthFallback = true;
+  }
+
   // Intercept loading error
   audio.addEventListener('error', () => {
     console.warn('Audio URL failed to load. Switching to Web Speech Synthesis fallback.');
@@ -111,34 +116,32 @@ export function initAudio() {
   function speakIntro() {
     window.speechSynthesis.cancel();
 
-    // Small delay to let cancel clear the speech queue before speaking new text
-    setTimeout(() => {
-      window.isAudioPlaying = true;
-      const text = "Hi, I am Ganesh. A technology enthusiast, entrepreneur, and AI innovator. Welcome to my digital space. Let's build something extraordinary together.";
-      synthUtterance = new SpeechSynthesisUtterance(text);
-      
-      const voices = window.speechSynthesis.getVoices();
-      const voice = voices.find(v => 
-        (v.name.includes('Google US English') || v.name.includes('Natural') || v.lang.startsWith('en')) &&
-        !v.name.includes('Low')
-      );
-      if (voice) {
-        synthUtterance.voice = voice;
+    // Trigger synchronously without setTimeout to avoid breaking the user-interaction call stack on iOS/Android
+    window.isAudioPlaying = true;
+    const text = "Hi, I am Ganesh. A technology enthusiast, entrepreneur, and AI innovator. Welcome to my digital space. Let's build something extraordinary together.";
+    synthUtterance = new SpeechSynthesisUtterance(text);
+    
+    const voices = window.speechSynthesis.getVoices();
+    const voice = voices.find(v => 
+      (v.name.includes('Google US English') || v.name.includes('Natural') || v.lang.startsWith('en')) &&
+      !v.name.includes('Low')
+    );
+    if (voice) {
+      synthUtterance.voice = voice;
+    }
+    
+    synthUtterance.pitch = 0.95;
+    synthUtterance.rate = 1.38; // Even faster, highly responsive conversational speed flow
+    
+    synthUtterance.onend = () => {
+      window.isAudioPlaying = false;
+      // If ended naturally (not cancelled by scroll suspension)
+      if (isPlaying && !isSuspendedByScroll) {
+        scrollBackToHero();
       }
-      
-      synthUtterance.pitch = 0.95;
-      synthUtterance.rate = 1.38; // Even faster, highly responsive conversational speed flow
-      
-      synthUtterance.onend = () => {
-        window.isAudioPlaying = false;
-        // If ended naturally (not cancelled by scroll suspension)
-        if (isPlaying && !isSuspendedByScroll) {
-          scrollBackToHero();
-        }
-      };
+    };
 
-      window.speechSynthesis.speak(synthUtterance);
-    }, 100);
+    window.speechSynthesis.speak(synthUtterance);
   }
 
   function scrollBackToHero() {
