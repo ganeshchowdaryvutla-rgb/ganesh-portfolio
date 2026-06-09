@@ -43,17 +43,10 @@ async function init() {
     initCursor();
   }
 
-  // Load avatar frames with premium loading screen
-  const avatarReady = initLoader();
-
   // Start particles in background
   initParticles();
 
-  // Wait for all frames to load
-  await avatarReady;
-
-  // Initialize all sections
-  initAvatar();
+  // Initialize audio and other modules immediately so they are ready to handle the user gesture
   initAudio();
   initNavigation();
   initHero();
@@ -61,6 +54,12 @@ async function init() {
   initSkills();
   initProjects();
   initContact();
+
+  // Load avatar frames and wait for loading screen completion (Enter button click)
+  await initLoader();
+
+  // Initialize avatar rendering after frames are loaded
+  initAvatar();
 }
 
 if (document.readyState === 'loading') {

@@ -33,11 +33,42 @@ export function initLoader() {
       percentText.textContent = `${percent}%`;
 
       if (loaded >= TOTAL_FRAMES) {
-        // All frames loaded — hide loader
+        // Hide progress bar and percent
         setTimeout(() => {
-          loaderScreen.classList.add('hidden');
-          resolve();
-        }, 600);
+          const progressContainer = progressBar.parentElement;
+          if (progressContainer) {
+            progressContainer.style.opacity = '0';
+            progressContainer.style.transition = 'opacity 0.3s ease';
+          }
+          percentText.style.opacity = '0';
+          percentText.style.transition = 'opacity 0.3s ease';
+          
+          setTimeout(() => {
+            if (progressContainer) progressContainer.style.display = 'none';
+            percentText.style.display = 'none';
+            
+            // Create Enter button
+            const enterBtn = document.createElement('button');
+            enterBtn.id = 'loader-enter-btn';
+            enterBtn.className = 'loader-enter-btn';
+            enterBtn.textContent = 'ENTER PORTFOLIO';
+            
+            loaderScreen.appendChild(enterBtn);
+            
+            enterBtn.addEventListener('click', () => {
+              // Mark user interaction as active
+              window.hasUserInteracted = true;
+              
+              // Trigger audio playback synchronously in this user gesture thread
+              if (typeof window.triggerAudioPlayback === 'function') {
+                window.triggerAudioPlayback();
+              }
+              
+              loaderScreen.classList.add('hidden');
+              resolve();
+            });
+          }, 300);
+        }, 400);
       }
     }
 

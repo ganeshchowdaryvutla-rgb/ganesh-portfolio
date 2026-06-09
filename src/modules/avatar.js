@@ -51,7 +51,7 @@ function sizeCanvas() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const isMobile = window.innerWidth <= 768;
   // Increase canvas resolution dimensions slightly on mobile to match CSS overflow sizing
-  const overflowScale = isMobile ? 1.1 : 1.0;
+  const overflowScale = isMobile ? 1.04 : 1.0;
   canvas.width = window.innerWidth * overflowScale * dpr;
   canvas.height = window.innerHeight * overflowScale * dpr;
 
@@ -81,8 +81,8 @@ function renderFrame(index) {
 
   if (isMobile) {
     // Mobile: contain-fit inside viewport, centering both horizontally and vertically.
-    // Scale up by 3.8x to increase its screen presence (height and width) on mobile backgrounds.
-    const mobileScale = 3.8;
+    // Scale up by 3.0x to increase its screen presence (height and width) on mobile backgrounds.
+    const mobileScale = 3.0;
     if (canvasRatio > imgRatio) {
       drawH = ch * mobileScale;
       drawW = ch * imgRatio * mobileScale;
