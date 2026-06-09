@@ -81,8 +81,8 @@ function renderFrame(index) {
 
   if (isMobile) {
     // Mobile: contain-fit inside viewport, centering both horizontally and vertically.
-    // Scale up by 2.6x to increase its screen presence (height and width) on mobile backgrounds.
-    const mobileScale = 2.6;
+    // Do not zoom or scale up the avatar to ensure full body visibility with no cropping.
+    const mobileScale = 1.0;
     if (canvasRatio > imgRatio) {
       drawH = ch * mobileScale;
       drawW = ch * imgRatio * mobileScale;
@@ -91,8 +91,7 @@ function renderFrame(index) {
       drawH = (cw / imgRatio) * mobileScale;
     }
     drawX = (cw - drawW) / 2;
-    // Shift the avatar slightly upwards to make space for bottom text alignment on mobile
-    drawY = (ch - drawH) / 2 - (ch * 0.08);
+    drawY = (ch - drawH) / 2;
   } else {
     // Desktop/Laptop: cover-fit, aligned to top
     if (canvasRatio > imgRatio) {

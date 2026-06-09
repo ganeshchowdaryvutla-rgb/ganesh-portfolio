@@ -1205,12 +1205,22 @@ section {
   .vision-quote { font-size: var(--text-3xl); }
   .vision-inner { padding: 30px 20px; }
 
-  /* Increase avatar canvas background size on mobile */
+  /* Centered contain-fit for mobile hero background elements */
+  .hero-video,
+  .hero-avatar,
+  .hero-bg video,
   #avatar-canvas {
-    width: 102vw;
-    height: 102vh;
-    top: -1vh;
-    left: -1vw;
+    object-fit: contain !important;
+    object-position: center center !important;
+    width: 100% !important;
+    height: 100% !important;
+    transform: none !important;
+    top: 0 !important;
+    left: 0 !important;
+  }
+
+  .hero-content {
+    z-index: 2;
   }
 }
 
