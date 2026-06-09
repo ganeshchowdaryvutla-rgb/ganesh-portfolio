@@ -1,5 +1,12 @@
 // ============================================
 // AUDIO — Background Voiceover Controller
+// 
+// PRIMARY: Plays the pre-rendered voiceover.mp3 (en-US-AndrewNeural)
+// which is a consistent, high-quality young adult male voice (20-28 yrs)
+// that sounds identical on every device — mobile, tablet, desktop.
+//
+// FALLBACK: If the MP3 fails to load or play, uses Web Speech Synthesis
+// with forced male voice selection + pitch tuning. This is a last resort.
 // ============================================
 
 import { gsap } from 'gsap';
@@ -11,13 +18,12 @@ let isPlaying = false;
 let isSuspendedByScroll = false;
 let speechVoices = [];
 
-// Pre-load speech voices immediately on script load to bypass async fetching delays on page load
+// Pre-cache speech voices for fallback path
 function updateVoices() {
   if (typeof window !== 'undefined' && window.speechSynthesis) {
     speechVoices = window.speechSynthesis.getVoices();
   }
 }
-
 if (typeof window !== 'undefined' && window.speechSynthesis) {
   updateVoices();
   window.speechSynthesis.onvoiceschanged = updateVoices;
@@ -29,14 +35,12 @@ export function initAudio() {
   const audio = document.getElementById('bg-audio');
   if (!audio) return;
 
-  // Set fallback by default if the source is a placeholder/example URL to prevent async error loading triggers
-  if (audio.src && (audio.src.includes('example.com') || audio.src.includes('invalid') || !audio.src)) {
-    useSynthFallback = true;
-  }
+  // The audio src is now /voiceover.mp3 — a real, pre-rendered file.
+  // Do NOT force useSynthFallback. Let the browser try to load it normally.
 
-  // Intercept loading error
+  // If the MP3 fails to load, switch to speech synthesis fallback
   audio.addEventListener('error', () => {
-    console.warn('Audio URL failed to load. Switching to Web Speech Synthesis fallback.');
+    console.warn('voiceover.mp3 failed to load. Switching to Speech Synthesis fallback.');
     useSynthFallback = true;
     if (isPlaying && !isSuspendedByScroll) {
       speakIntro();
@@ -51,7 +55,7 @@ export function initAudio() {
     }
   });
 
-  // Set up playback trigger
+  // Set up playback trigger (fires once on first user interaction)
   let playbackStarted = false;
   const triggerPlaybackOnce = () => {
     if (playbackStarted) return;
@@ -70,8 +74,8 @@ export function initAudio() {
   // ScrollTrigger to pause voiceover outside of Hero & Vision sections
   ScrollTrigger.create({
     trigger: '#vision',
-    start: 'top bottom', // Start monitoring when Vision section enters the viewport
-    end: 'bottom 20%', // Pause when scrolling down past the bottom of the Vision section
+    start: 'top bottom',
+    end: 'bottom 20%',
     onLeave: () => {
       window.isAudioPlaying = false;
       if (isPlaying && !isSuspendedByScroll) {
@@ -106,7 +110,6 @@ export function initAudio() {
     const vision = document.getElementById('vision');
     if (vision) {
       const visionBottom = vision.getBoundingClientRect().bottom;
-      // If bottom of Vision is scrolled past the top 20% of viewport, suspend it
       if (visionBottom <= window.innerHeight * 0.2) {
         isSuspendedByScroll = true;
         return;
@@ -116,43 +119,48 @@ export function initAudio() {
     if (useSynthFallback) {
       speakIntro();
     } else {
+      // Always try the MP3 first — it contains the consistent male voice
       window.isAudioPlaying = true;
       audio.play().catch((err) => {
         window.isAudioPlaying = false;
-        console.warn('Autoplay blocked or audio failed, trying fallback speech.', err);
+        console.warn('MP3 autoplay blocked or failed, trying Speech Synthesis fallback.', err);
         useSynthFallback = true;
         speakIntro();
       });
     }
   }
 
+  // ============================================
+  // SPEECH SYNTHESIS FALLBACK
+  // Only used if voiceover.mp3 fails to load/play.
+  // Forces a male English voice on ALL devices.
+  // ============================================
   function speakIntro() {
     window.speechSynthesis.cancel();
-
-    // Trigger synchronously without setTimeout to avoid breaking the user-interaction call stack on iOS/Android
     window.isAudioPlaying = true;
+
     const text = "Hi, I am Ganesh. A technology enthusiast, entrepreneur, and AI innovator. Welcome to my digital space. Let's build something extraordinary together.";
     synthUtterance = new SpeechSynthesisUtterance(text);
     
-    // Use cached speechVoices array if available, otherwise call getVoices()
+    // Get voices — prefer cached, fallback to live query
     const rawVoices = speechVoices.length > 0 ? speechVoices : window.speechSynthesis.getVoices();
     
-    // Filter to English voices
+    // Filter to English voices only
     const englishVoices = rawVoices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
     
-    // Critical Safari Fix: Only use locally downloaded voices to prevent silent failures
+    // Prefer locally installed voices (Safari remote voices can fail silently)
     const localEnglish = englishVoices.filter(v => v.localService === true);
     const voices = localEnglish.length > 0 ? localEnglish : (englishVoices.length > 0 ? englishVoices : rawVoices);
     
-    // Score all available voices to select the best English male voice
-    const maleNames = [
+    // ---- FORCED MALE VOICE SELECTION ----
+    // These lists ensure the same male voice is picked regardless of device/browser
+    const maleKeywords = [
       'david', 'mark', 'george', 'alex', 'daniel', 'fred', 'oliver', 'aaron', 'arthur', 
       'gordon', 'rishi', 'ravi', 'james', 'william', 'jack', 'harry', 'charlie', 
-      'thomas', 'matt', 'robert', 'peter', 'guy', 'boy', 'man', 'male', 'voice 1', 
-      'voice 3', 'voice1', 'voice3', 'natural', 'microsoft david', 'google uk english male'
+      'thomas', 'matt', 'robert', 'peter', 'guy', 'male', 'voice 1', 'voice 3',
+      'voice1', 'voice3', 'microsoft david', 'google uk english male', 'andrew'
     ];
-
-    const femaleNames = [
+    const femaleKeywords = [
       'samantha', 'susan', 'zira', 'hazel', 'karen', 'moira', 'tessa', 'veena', 
       'sangeeta', 'heera', 'victoria', 'stephanie', 'fiona', 'female', 'girl', 
       'woman', 'lady', 'voice 2', 'voice 4', 'voice2', 'voice4', 'google us english', 
@@ -164,82 +172,57 @@ export function initAudio() {
       const lang = v.lang.toLowerCase();
       let score = 0;
 
-      // Primary check: Language must be English for English text
-      if (lang.startsWith('en')) {
-        score += 100;
-      } else {
-        score -= 200; // heavy penalty for non-English languages
-      }
+      if (lang.startsWith('en')) score += 100;
+      else score -= 200;
 
-      // Check for male keywords
-      for (const maleName of maleNames) {
-        if (name.includes(maleName)) {
-          score += 150;
-          break;
-        }
+      for (const kw of maleKeywords) {
+        if (name.includes(kw)) { score += 150; break; }
       }
-
-      // Check for female keywords
-      for (const femaleName of femaleNames) {
-        if (name.includes(femaleName)) {
-          score -= 300;
-          break;
-        }
+      for (const kw of femaleKeywords) {
+        if (name.includes(kw)) { score -= 300; break; }
       }
-
-      // Prefer local/high-quality voices if available
-      if (v.localService) {
-        score += 20;
-      }
+      if (v.localService) score += 20;
 
       return { voice: v, score };
     });
 
-    // Sort descending by score
     scoredVoices.sort((a, b) => b.score - a.score);
 
     let voice = null;
     let isMaleVoice = false;
     
-    if (scoredVoices[0] && scoredVoices[0].score >= 200) {
+    if (scoredVoices.length > 0 && scoredVoices[0].score >= 200) {
       voice = scoredVoices[0].voice;
       isMaleVoice = true;
-      console.log(`Selected male voice: ${voice.name} (${voice.lang}) with score ${scoredVoices[0].score}`);
-    } else if (scoredVoices[0]) {
+    } else if (scoredVoices.length > 0) {
       voice = scoredVoices[0].voice;
       isMaleVoice = false;
-      console.log(`Selected fallback voice: ${voice.name} (${voice.lang}) with score ${scoredVoices[0].score}`);
-    } else {
-      console.warn('Could not find any English speech voice.');
     }
 
     if (voice) {
       synthUtterance.voice = voice;
-      
+      console.log(`Fallback voice: ${voice.name} (${voice.lang}), male=${isMaleVoice}`);
+    }
+    
+    // Pitch tuning: make it sound like a confident 20-28 year old male
+    if (isMaleVoice) {
       const name = voice.name.toLowerCase();
       if (name.includes('david')) {
-        // Shift older male voice David up to sound younger (20-28 range)
-        synthUtterance.pitch = 1.15;
+        synthUtterance.pitch = 1.15; // David sounds older, shift up
       } else if (name.includes('daniel')) {
-        // Shift mature Daniel voice up slightly to sound like a 25-28 year old
         synthUtterance.pitch = 1.1;
-      } else if (isMaleVoice) {
-        // Google, Siri, Aaron, Rishi etc. sound naturally in the 20-28 range
-        synthUtterance.pitch = 1.0;
       } else {
-        // Pitch-shift Samantha or fallback female voices to sound like a young male (20-28 range)
-        synthUtterance.pitch = 0.82;
+        synthUtterance.pitch = 1.0; // Most male voices are naturally in range
       }
     } else {
-      // General fallback pitch-shift
+      // Female or unknown voice — pitch-shift down to sound male
       synthUtterance.pitch = 0.82;
     }
     
-    synthUtterance.rate = 1.25; // Energetic young adult conversational speed flow
-    
+    synthUtterance.rate = 1.15; // Professional, balanced pacing
+
     synthUtterance.onend = () => {
       window.isAudioPlaying = false;
-      // If ended naturally (not cancelled by scroll suspension)
       if (isPlaying && !isSuspendedByScroll) {
         scrollBackToHero();
       }
@@ -249,13 +232,10 @@ export function initAudio() {
   }
 
   function scrollBackToHero() {
-    // Smoothly scroll down back to the hero section (top)
-    // autoKill: true allows user interaction to instantly cancel this auto-scroll
     gsap.to(window, {
       scrollTo: { y: 0, autoKill: true },
       duration: 4,
       ease: 'power2.inOut',
     });
   }
-
 }
