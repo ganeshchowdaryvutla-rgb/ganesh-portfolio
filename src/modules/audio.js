@@ -215,11 +215,27 @@ export function initAudio() {
 
     if (voice) {
       synthUtterance.voice = voice;
+      
+      const name = voice.name.toLowerCase();
+      if (name.includes('david')) {
+        // Shift older male voice David up to sound younger (20-28 range)
+        synthUtterance.pitch = 1.15;
+      } else if (name.includes('daniel')) {
+        // Shift mature Daniel voice up slightly to sound like a 25-28 year old
+        synthUtterance.pitch = 1.1;
+      } else if (isMaleVoice) {
+        // Google, Siri, Aaron, Rishi etc. sound naturally in the 20-28 range
+        synthUtterance.pitch = 1.0;
+      } else {
+        // Pitch-shift Samantha or fallback female voices to sound like a young male (20-28 range)
+        synthUtterance.pitch = 0.82;
+      }
+    } else {
+      // General fallback pitch-shift
+      synthUtterance.pitch = 0.82;
     }
     
-    // Pitch shift fallback: if no male voice is found, lower the pitch to 0.7 to synthesize a male voice from a female voice
-    synthUtterance.pitch = isMaleVoice ? 0.95 : 0.7;
-    synthUtterance.rate = 1.38; // Even faster, highly responsive conversational speed flow
+    synthUtterance.rate = 1.25; // Energetic young adult conversational speed flow
     
     synthUtterance.onend = () => {
       window.isAudioPlaying = false;
