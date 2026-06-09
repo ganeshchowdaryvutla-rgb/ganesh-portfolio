@@ -1191,7 +1191,7 @@ section {
   .nav-links, .nav-cta { display: none; }
   .nav-toggle { display: flex; }
   .nav { padding: var(--space-md) var(--space-xl); }
-  .hero { padding: 0 var(--space-lg); }
+  .hero { padding: 0 var(--space-lg) var(--space-4xl); justify-content: flex-end; }
   .section-container { padding: var(--space-section) var(--space-xl); }
   .hero-title { font-size: clamp(2rem, 9vw, 3.5rem); }
   .hero-buttons { flex-direction: column; align-items: center; }
@@ -1207,10 +1207,10 @@ section {
 
   /* Increase avatar canvas background size on mobile */
   #avatar-canvas {
-    width: 104vw;
-    height: 104vh;
-    top: -2vh;
-    left: -2vw;
+    width: 102vw;
+    height: 102vh;
+    top: -1vh;
+    left: -1vw;
   }
 }
 

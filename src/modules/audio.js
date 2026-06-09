@@ -135,7 +135,14 @@ export function initAudio() {
     synthUtterance = new SpeechSynthesisUtterance(text);
     
     // Use cached speechVoices array if available, otherwise call getVoices()
-    const voices = speechVoices.length > 0 ? speechVoices : window.speechSynthesis.getVoices();
+    const rawVoices = speechVoices.length > 0 ? speechVoices : window.speechSynthesis.getVoices();
+    
+    // Filter to English voices
+    const englishVoices = rawVoices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+    
+    // Critical Safari Fix: Only use locally downloaded voices to prevent silent failures
+    const localEnglish = englishVoices.filter(v => v.localService === true);
+    const voices = localEnglish.length > 0 ? localEnglish : (englishVoices.length > 0 ? englishVoices : rawVoices);
     
     // Score all available voices to select the best English male voice
     const maleNames = [
@@ -192,18 +199,26 @@ export function initAudio() {
     scoredVoices.sort((a, b) => b.score - a.score);
 
     let voice = null;
-    if (scoredVoices[0] && scoredVoices[0].score > -100) {
+    let isMaleVoice = false;
+    
+    if (scoredVoices[0] && scoredVoices[0].score >= 200) {
       voice = scoredVoices[0].voice;
+      isMaleVoice = true;
       console.log(`Selected male voice: ${voice.name} (${voice.lang}) with score ${scoredVoices[0].score}`);
+    } else if (scoredVoices[0]) {
+      voice = scoredVoices[0].voice;
+      isMaleVoice = false;
+      console.log(`Selected fallback voice: ${voice.name} (${voice.lang}) with score ${scoredVoices[0].score}`);
     } else {
-      console.warn('Could not find a high-quality male English voice, using browser default voice.');
+      console.warn('Could not find any English speech voice.');
     }
 
     if (voice) {
       synthUtterance.voice = voice;
     }
     
-    synthUtterance.pitch = 0.95;
+    // Pitch shift fallback: if no male voice is found, lower the pitch to 0.7 to synthesize a male voice from a female voice
+    synthUtterance.pitch = isMaleVoice ? 0.95 : 0.7;
     synthUtterance.rate = 1.38; // Even faster, highly responsive conversational speed flow
     
     synthUtterance.onend = () => {

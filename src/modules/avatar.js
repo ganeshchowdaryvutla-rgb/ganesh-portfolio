@@ -51,7 +51,7 @@ function sizeCanvas() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const isMobile = window.innerWidth <= 768;
   // Increase canvas resolution dimensions slightly on mobile to match CSS overflow sizing
-  const overflowScale = isMobile ? 1.04 : 1.0;
+  const overflowScale = isMobile ? 1.02 : 1.0;
   canvas.width = window.innerWidth * overflowScale * dpr;
   canvas.height = window.innerHeight * overflowScale * dpr;
 
@@ -81,8 +81,8 @@ function renderFrame(index) {
 
   if (isMobile) {
     // Mobile: contain-fit inside viewport, centering both horizontally and vertically.
-    // Scale up by 3.0x to increase its screen presence (height and width) on mobile backgrounds.
-    const mobileScale = 3.0;
+    // Scale up by 2.6x to increase its screen presence (height and width) on mobile backgrounds.
+    const mobileScale = 2.6;
     if (canvasRatio > imgRatio) {
       drawH = ch * mobileScale;
       drawW = ch * imgRatio * mobileScale;
@@ -91,7 +91,8 @@ function renderFrame(index) {
       drawH = (cw / imgRatio) * mobileScale;
     }
     drawX = (cw - drawW) / 2;
-    drawY = (ch - drawH) / 2;
+    // Shift the avatar slightly upwards to make space for bottom text alignment on mobile
+    drawY = (ch - drawH) / 2 - (ch * 0.08);
   } else {
     // Desktop/Laptop: cover-fit, aligned to top
     if (canvasRatio > imgRatio) {
